@@ -13,6 +13,9 @@ X_train, X_test = X_train / 255.0, X_test / 255.0
 X_train = X_train.reshape(-1, 28*28)
 X_test = X_test.reshape(-1, 28*28)
 
+# Список для хранения результатов
+results = []
+
 # Функция построения модели
 def build_model(use_dropout=False, use_bn=False, learning_rate=0.001):
     model = models.Sequential()
@@ -45,6 +48,7 @@ def build_model(use_dropout=False, use_bn=False, learning_rate=0.001):
 def train_and_plot(model, epochs, title='', filename='plot.png'):
     history = model.fit(X_train, y_train, epochs=epochs, validation_data=(X_test, y_test), verbose=1, batch_size=64)
 
+    # Графики
     plt.figure(figsize=(12, 5))
 
     plt.subplot(1, 2, 1)
@@ -67,28 +71,51 @@ def train_and_plot(model, epochs, title='', filename='plot.png'):
     plt.savefig(f"grafiki/{filename}", dpi=300)
     plt.close()
 
+    # Сбор статистики
+    final_train_acc = history.history['accuracy'][-1] * 100
+    final_test_acc = history.history['val_accuracy'][-1] * 100
+    final_train_loss = history.history['loss'][-1]
+    final_test_loss = history.history['val_loss'][-1]
+
+    results.append({
+        'Название': title,
+        'Точн. обуч. (%)': round(final_train_acc, 1),
+        'Точн. теста (%)': round(final_test_acc, 1),
+        'Потери обуч.': round(final_train_loss, 2),
+        'Потери теста': round(final_test_loss, 2)
+    })
+
 # Эксперимент 1
-print("\nЭксперимент 1: Влияние числа эпох")
-train_and_plot(build_model(), 5, '5 эпох', 'exp1_5_epoh.png')
-train_and_plot(build_model(), 30, '30 эпох', 'exp1_30_epoh.png')
+print("\nЭксперимент: Влияние числа эпох")
+train_and_plot(build_model(), 5, '5 эпох', 'epoh_5.png')
+train_and_plot(build_model(), 10, '10 эпох', 'epoh_10.png')
+train_and_plot(build_model(), 20, '20 эпох', 'epoh_20.png')
+train_and_plot(build_model(), 30, '30 эпох', 'epoh_30.png')
+train_and_plot(build_model(), 50, '50 эпох', 'epoh_50.png')
 
 # Эксперимент 2
-print("\nЭксперимент 2: Влияние learning rate")
-train_and_plot(build_model(learning_rate=0.0001), 5, 'LR=0.0001 (5 эпох)', 'exp2_lr0001_5epoh.png')
-train_and_plot(build_model(learning_rate=0.0001), 30, 'LR=0.0001 (30 эпох)', 'exp2_lr0001_30epoh.png')
-train_and_plot(build_model(learning_rate=0.01), 5, 'LR=0.01 (5 эпох)', 'exp2_lr01_5epoh.png')
-train_and_plot(build_model(learning_rate=0.01), 30, 'LR=0.01 (30 эпох)', 'exp2_lr01_30epoh.png')
+print("\nЭксперимент: Learning Rate")
+train_and_plot(build_model(learning_rate=0.0001), 30, 'LR = 0.0001', 'lr_0001.png')
+train_and_plot(build_model(learning_rate=0.01), 30, 'LR = 0.01', 'lr_01.png')
 
 # Эксперимент 3
-print("\nЭксперимент 3: Влияние Dropout")
-train_and_plot(build_model(use_dropout=True), 5, 'С Dropout (5 эпох)', 'exp3_dropout_5epoh.png')
-train_and_plot(build_model(use_dropout=True), 30, 'С Dropout (30 эпох)', 'exp3_dropout_30epoh.png')
-train_and_plot(build_model(use_dropout=False), 5, 'Без Dropout (5 эпох)', 'exp3_nodropout_5epoh.png')
-train_and_plot(build_model(use_dropout=False), 30, 'Без Dropout (30 эпох)', 'exp3_nodropout_30epoh.png')
+print("\nЭксперимент: Dropout")
+train_and_plot(build_model(use_dropout=False), 30, 'Без Dropout', 'dropout_off.png')
+train_and_plot(build_model(use_dropout=True), 30, 'С Dropout', 'dropout_on.png')
 
 # Эксперимент 4
-print("\nЭксперимент 4: Влияние Batch Normalization")
-train_and_plot(build_model(use_bn=True), 5, 'С BatchNorm (5 эпох)', 'exp4_bn_5epoh.png')
-train_and_plot(build_model(use_bn=True), 30, 'С BatchNorm (30 эпох)', 'exp4_bn_30epoh.png')
-train_and_plot(build_model(use_bn=False), 5, 'Без BatchNorm (5 эпох)', 'exp4_nobn_5epoh.png')
-train_and_plot(build_model(use_bn=False), 30, 'Без BatchNorm (30 эпох)', 'exp4_nobn_30epoh.png')
+print("\nЭксперимент: BatchNorm")
+train_and_plot(build_model(use_bn=False), 30, 'Без BatchNorm', 'bn_off.png')
+train_and_plot(build_model(use_bn=True), 30, 'С BatchNorm', 'bn_on.png')
+
+print("\nИтоговая таблица результатов:")
+print("{:<25} {:>15} {:>15} {:>15} {:>15}".format("Эксперимент", "Точн. обуч. (%)", "Точн. теста (%)", "Потери обуч.", "Потери теста"))
+print("-" * 90)
+for r in results:
+    print("{:<25} {:>15} {:>15} {:>15} {:>15}".format(
+        r['Название'],
+        r['Точн. обуч. (%)'],
+        r['Точн. теста (%)'],
+        r['Потери обуч.'],
+        r['Потери теста']
+    ))
