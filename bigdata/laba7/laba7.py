@@ -1,12 +1,10 @@
 import pandas as pd
-import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
 from sklearn.decomposition import PCA
-from sklearn.manifold import TSNE
 
 # Загрузка данных
 data = pd.read_csv('spotifydataset.csv')
@@ -15,15 +13,14 @@ data = pd.read_csv('spotifydataset.csv')
 audio_features = ['danceability', 'energy', 'loudness', 'speechiness',
                  'acousticness', 'instrumentalness', 'liveness', 'valence', 'tempo']
 
-# Предварительная обработка данных
-X = data[audio_features]
-X.fillna(X.mean(), inplace=True)  # Заполнение пропущенных значений средними
+X = data[audio_features].copy()
+X.fillna(X.mean(), inplace=True)
 
 # Масштабирование данных
 scaler = StandardScaler()
 X_scaled = scaler.fit_transform(X)
 
-# Определение оптимального числа кластеров с помощью метода локтя
+# Определение оптимального числа кластеров
 wcss = []
 silhouette_scores = []
 max_clusters = 20
@@ -77,13 +74,12 @@ sns.heatmap(cluster_means.T, cmap='YlGnBu', annot=True, fmt='.2f')
 plt.title('Средние значения аудио-характеристик по кластерам')
 plt.show()
 
-# Функция для рекомендации треков из того же кластера
 def recommend_songs(track_name, n_recommendations=5):
     try:
         cluster = data[data['track_name'] == track_name]['cluster'].values[0]
-        same_cluster = data[data['cluster'] == cluster]
-        recommendations = same_cluster[same_cluster['track_name'] != track_name].sample(n_recommendations)
-        return recommendations[['track_name', 'artist_name', 'genres']]
+        same_cluster = data[(data['cluster'] == cluster) & (data['track_name'] != track_name)]
+        recommendations = same_cluster.sort_values('track_popularity', ascending=False).head(n_recommendations)
+        return recommendations[['track_name', 'artist_name', 'track_popularity']]
     except:
         return "Трек не найден в базе данных"
 
